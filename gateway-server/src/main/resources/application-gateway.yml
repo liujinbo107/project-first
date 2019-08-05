@@ -1,0 +1,20 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: gateway-client #id是唯一的
+          #uri: lb://gateway-client #被代理的服务的uri
+          uri: http://localhost:8090
+          predicates:
+          - Path=/api/client/**
+          #- Weight=service,1
+          #- Cookie=test,123456
+          #- Method= POST
+          #- Header=test,(.*?)
+          filters:
+          - StripPrefix=2
+#          - name: RequestRateLimiter
+#            args:
+#                  keyResolver: "#{@remoteAddrKeyResolver}"
+#                  redis-rate-limiter.replenishRate: 1 #单位时间允许执行请求的个数
+#                  redis-rate-limiter.burstCapacity: 2 #单位时间内允许向桶中放入令牌的数量
