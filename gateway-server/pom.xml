@@ -13,7 +13,6 @@
 
     <dependencies>
 
-
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway</artifactId>
@@ -37,6 +36,11 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.liujinbo</groupId>
+            <artifactId>ljb-acommon</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>

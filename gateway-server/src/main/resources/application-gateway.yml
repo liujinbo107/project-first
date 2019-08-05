@@ -18,3 +18,10 @@ spring:
 #                  keyResolver: "#{@remoteAddrKeyResolver}"
 #                  redis-rate-limiter.replenishRate: 1 #单位时间允许执行请求的个数
 #                  redis-rate-limiter.burstCapacity: 2 #单位时间内允许向桶中放入令牌的数量
+        - id: SSO-SERVER
+          uri: lb://sso-server
+          predicates:
+          - Path=/sso/auth/**
+          - Cookie=authcode,(.*)
+          filters:
+            - StripPrefix=2
