@@ -34,7 +34,7 @@ public class MyGlobalFilter implements GlobalFilter {
     private String loginpage;
 
     @Autowired
-    private RedisTemplate redisTemplate;
+    private RedisTemplate<String,String> redisTemplate;
 
     /**
      * @param exchange
@@ -49,6 +49,11 @@ public class MyGlobalFilter implements GlobalFilter {
         ServerHttpResponse response = exchange.getResponse();
         //获取当前的请求路径
         String currentpath = request.getURI().toString();
+
+        //截取请求接口
+        String substring = currentpath.substring(currentpath.lastIndexOf("/")+1);
+
+        System.out.println(substring+"===请求接口");
 
         //验证当前路径是否是公共资源路径  是否不需要通过登录校验
         List<String> strings = Arrays.asList(urls);
@@ -77,8 +82,8 @@ public class MyGlobalFilter implements GlobalFilter {
             }
             //获取用户ID
             String userId = jsonObject.get("id").toString();
-            //教研用户有没有范文该资源的权限
-            Boolean isok = redisTemplate.opsForHash().hasKey("USERDATAAUTH" + userId, currentpath);
+            //校验用户有没有范文该资源的权限
+            Boolean isok = redisTemplate.opsForHash().hasKey("USERDATAAUTH" + userId, substring);
             //isok=true说明有访问资源的权限
             if(isok){
                 //验证当前路径不是需要进行登录校验的路径

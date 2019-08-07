@@ -100,12 +100,17 @@ public class AuthController {
                     //将生成的token存储到redis库
                     redisTemplate.opsForValue().set("USERINFO"+user.getId().toString(),token);
                     //将生成的数据访问权限信息存入缓存中
-//                    redisTemplate.opsForHash().putAll("USERDATAAUTH"+user.getId().toString(),user.getAuthmap());
+                    redisTemplate.opsForHash().putAll("USERDATAAUTH"+user.getId().toString(),user.getAuthmap());
+
+                    System.out.println(user.getAuthmap().toString()+"====权限集合");
 
                     //设置token过期 30分钟
                     redisTemplate.expire("USERINFO"+user.getId().toString(),600, TimeUnit.SECONDS);
                     //设置返回值
                     responseResult.setResult(user);
+
+                    System.out.println(user);
+
                     responseResult.setCode(200);
                     //设置成功的信息
                     responseResult.setSuccess("登陆成功");

@@ -37,6 +37,9 @@ public class UserInfo extends BaseAuditable {
     @Column(name = "parentId")
     private Long parentId;
 
+    @Column(name = "touxiang")
+    private String touxiang;
+
     @Transient
     private List<MenuInfo> listMenuInfo;
 

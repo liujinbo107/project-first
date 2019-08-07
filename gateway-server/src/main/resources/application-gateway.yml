@@ -2,13 +2,13 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: gateway-client #id是唯一的
-          #uri: lb://gateway-client #被代理的服务的uri
-          uri: http://localhost:8090
+        - id: MANAGER-SERVER #id是唯一的
+          uri: lb://MANAGER-SERVER #被代理的服务的uri
+          #uri: http://localhost:8090
           predicates:
-          - Path=/api/client/**
+          - Path=/api/manger/**
           #- Weight=service,1
-          #- Cookie=test,123456
+          #- Cookie=authcode,(.*)
           #- Method= POST
           #- Header=test,(.*?)
           filters:
