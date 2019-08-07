@@ -219,7 +219,7 @@ public class UserController {
 
             userDao.save(userInfo);
 
-            responseResult.setSuccess("修改成功");
+            responseResult.setSuccess("修改成功ss");
 
             responseResult.setCode(200);
         }catch (Exception e){
