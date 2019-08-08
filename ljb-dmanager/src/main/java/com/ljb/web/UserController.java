@@ -3,15 +3,16 @@ package com.ljb.web;
 import com.ljb.config.ResponseResult;
 import com.ljb.dao.RoleDao;
 import com.ljb.dao.UserDao;
+import com.ljb.dao.UserMapper;
 import com.ljb.pojo.entity.RoleInfo;
 import com.ljb.pojo.entity.UserInfo;
 import com.ljb.utils.MD5;
+import com.ljb.utils.UID;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,6 +41,9 @@ public class UserController {
 
     @Autowired
     private UserDao userDao;
+
+    @Autowired(required = false)
+    private UserMapper userMapper;
 
     /**
      * 获取用户列表
@@ -179,8 +183,18 @@ public class UserController {
 
         System.out.println(userInfo+"用户信息******");
         try {
-            //将时间戳获取为id
-            userInfo.setId(System.currentTimeMillis());
+
+            //判断登录名称是否唯一
+            if(userDao.findAllByLoginName(userInfo.getLoginName())!=null){
+
+                responseResult.setCode(203);
+
+                responseResult.setSuccess("登陆名称已存在");
+
+                return responseResult;
+            }
+            //算法的id
+            userInfo.setId(UID.next());
             //密码加密
             String lcg = MD5.encryptPassword(userInfo.getPassword(), "lcg");
             //重新设置密码
@@ -212,6 +226,20 @@ public class UserController {
 
         System.out.println(userInfo+"用户信息******");
         try {
+
+            //判断登录名称是否唯一
+            UserInfo allByLoginName = userDao.findAllByLoginName(userInfo.getLoginName());
+
+            if(allByLoginName!=null){
+                //判断是否是修改对象
+                if(!userInfo.getId().toString().equals(allByLoginName.getId().toString())){
+                    responseResult.setCode(203);
+
+                    responseResult.setSuccess("登陆名称已存在");
+
+                    return responseResult;
+                }
+            }
             //密码加密
             String lcg = MD5.encryptPassword(userInfo.getPassword(), "lcg");
             //重新设置密码
@@ -228,6 +256,59 @@ public class UserController {
             responseResult.setCode(500);
         }
 
+        return responseResult;
+    }
+
+    /**
+     * 角色列表
+     * @return
+     */
+    @RequestMapping("tofindallrole")
+    public ResponseResult findallrole(){
+
+        //获取所有角色列表
+        List<RoleInfo> all = roleDao.findAll();
+
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+
+        responseResult.setResult(all);
+
+        return responseResult;
+
+    }
+
+    /**
+     * 用户绑定角色
+     * @param map
+     * @return
+     */
+    @RequestMapping("tobdrole")
+    public ResponseResult tobdrole(@RequestBody Map<String,String> map){
+
+        //获取用户id
+        long userId = Long.parseLong(map.get("userId"));
+
+        //删除用户之前绑定的角色
+        userMapper.deluserrole(userId);
+
+        //获取绑定的角色id
+        long roleId = Long.parseLong(map.get("roleId"));
+
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+
+        try {
+            //角色绑定
+            userMapper.adduserrole(userId,roleId);
+
+            responseResult.setSuccess("绑定成功");
+
+            responseResult.setCode(200);
+        }catch (Exception e){
+
+            responseResult.setSuccess("绑定失败");
+
+            responseResult.setCode(500);
+        }
         return responseResult;
     }
 

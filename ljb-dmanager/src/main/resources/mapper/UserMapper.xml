@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljb.dao.UserMapper">
+
+    <delete id="deluserrole">
+        delete from base_user_role where userId = #{userId}
+    </delete>
+
+    <insert id="adduserrole">
+        insert into base_user_role(roleId,userId) values(#{roleId},#{userId})
+    </insert>
+
+    <delete id="delroleuser">
+        delete from base_user_role where roleId = #{roleId}
+    </delete>
+
+    <delete id="delrolemenu">
+        delete from base_role_menu where roleId = #{roleId}
+    </delete>
+
+    <insert id="addrolemenu">
+        insert into base_role_menu(roleId,menuId) values (#{roleId},#{menuId})
+    </insert>
+</mapper>
