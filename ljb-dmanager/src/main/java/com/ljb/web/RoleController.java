@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.persistence.CacheRetrieveMode;
 import javax.persistence.EntityManager;
+import javax.persistence.FlushModeType;
 import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,6 +47,7 @@ public class RoleController {
 
     @Autowired
     private MenuDao menuDao;
+
 
     /**
      * 获取角色列表 模糊查询
@@ -76,11 +79,16 @@ public class RoleController {
 
         System.out.println(roleInfoMap.toString());
 
+        myEntityManager.clear();
         //查列表
         Query nativeQuery = myEntityManager.createNativeQuery(stringBuffer.toString(), RoleInfo.class);
 
+        nativeQuery.setFlushMode(FlushModeType.AUTO);
+
         //总条数
         Query nativeQuery1 = myEntityManager.createNativeQuery(stringBufferCount.toString());
+
+
 
         List<RoleInfo> resultList = nativeQuery.getResultList();
 
@@ -97,7 +105,6 @@ public class RoleController {
             role.setListMenuInfo(getrolemenu);
 
         });
-
         //放入map集合
         map.put("list",resultList);
 
@@ -133,7 +140,9 @@ public class RoleController {
            //随机设置角色id
            roleInfo.setId(UID.next());
            //添加角色
-           roleDao.save(roleInfo);
+           roleDao.saveAndFlush(roleInfo);
+
+
 
            responseResult.setSuccess("添加成功");
 
@@ -223,8 +232,8 @@ public class RoleController {
 
         List<Long> integers = StringToInteger.toInteger(split);
 
-        //创建对象
-        RoleInfo roleInfo = new RoleInfo();
+        //根据查询对象
+        RoleInfo roleInfo = roleDao.findById(id).get();
 
         roleInfo.setRoleName(roleName);
 
@@ -235,12 +244,14 @@ public class RoleController {
         ResponseResult responseResult = ResponseResult.getResponseResult();
         try {
             //修改角色
-            roleDao.save(roleInfo);
+            roleDao.saveAndFlush(roleInfo);
+
+
 
             userMapper.delrolemenu(id);
 
             //添加中间表
-            for(Long ii: integers){
+           for(Long ii: integers){
                 userMapper.addrolemenu(id,ii);
             }
 
@@ -253,6 +264,7 @@ public class RoleController {
 
             responseResult.setCode(500);
         }
+
 
         return responseResult;
 

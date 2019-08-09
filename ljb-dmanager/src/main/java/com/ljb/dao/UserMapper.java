@@ -3,6 +3,9 @@ package com.ljb.dao;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+import java.util.Map;
+
 @Mapper
 public interface UserMapper {
 
@@ -20,4 +23,6 @@ public interface UserMapper {
 
     //给角色绑定权限
     public void addrolemenu(@Param("roleId") Long roleId, @Param("menuId") Long menuId);
+
+    public List<Map> selectRoleDao();
 }

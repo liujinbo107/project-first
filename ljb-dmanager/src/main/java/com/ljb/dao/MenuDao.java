@@ -15,9 +15,20 @@ public interface MenuDao extends JpaRepository<MenuInfo,Long> {
     @Query(value = "select bm.* from base_role_menu brm INNER JOIN base_menu bm ON brm.menuId=bm.id where brm.roleId=?1 and bm.leval=?2 and bm.parentId=?3",nativeQuery = true)
     public List<MenuInfo> getFirstMenuInfo(Long roleId, Integer leval, Long parentId);
 
+    /**
+     * 根据等级和父id获取菜单
+     * @param leval
+     * @param parentId
+     * @return
+     */
     @Query(value = "select bm.* from base_menu bm where bm.leval=?1 and bm.parentId=?2",nativeQuery = true)
     public List<MenuInfo> getAllMenuList(Integer leval,Long parentId);
 
+    /**
+     * 根据角色id获取菜单信息
+     * @param roleId
+     * @return
+     */
     @Query(value = "select bm.* from base_role_menu brm INNER JOIN base_menu bm ON brm.menuId=bm.id where brm.roleId=?1",nativeQuery = true)
     public List<MenuInfo> getrolemenu(Long roleId);
 }

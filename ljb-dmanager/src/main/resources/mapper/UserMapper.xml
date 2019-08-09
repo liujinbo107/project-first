@@ -22,4 +22,8 @@
     <insert id="addrolemenu">
         insert into base_role_menu(roleId,menuId) values (#{roleId},#{menuId})
     </insert>
+
+    <select id="selectRoleDao" resultType="java.util.Map">
+        select * from base_role
+    </select>
 </mapper>

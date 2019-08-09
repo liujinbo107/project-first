@@ -13,4 +13,5 @@ public interface UserDao extends JpaRepository<UserInfo,Long> {
     @Query(value = "select GROUP_CONCAT(bu.userName) userNames from base_user bu INNER JOIN base_user_role bur on bu.id=bur.userId where bur.roleId=?1",nativeQuery = true)
     public String findUserForRoleId(Long roleId);
 
+
 }

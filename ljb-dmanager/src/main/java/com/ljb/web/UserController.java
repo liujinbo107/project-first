@@ -98,6 +98,8 @@ public class UserController {
         stringBuffer.append(" limit "+(pageNo-1)*pageSize+","+pageSize);
 
         System.out.println(userInfoMap.toString());
+        //清空缓存
+        myEntityManager.clear();
 
         //查列表
         Query nativeQuery = myEntityManager.createNativeQuery(stringBuffer.toString(), UserInfo.class);
@@ -245,7 +247,7 @@ public class UserController {
             //重新设置密码
             userInfo.setPassword(lcg);
 
-            userDao.save(userInfo);
+            userDao.saveAndFlush(userInfo);
 
             responseResult.setSuccess("修改成功ss");
 
