@@ -4,6 +4,7 @@ import com.ljb.config.ResponseResult;
 import com.ljb.dao.MenuDao;
 import com.ljb.pojo.entity.MenuInfo;
 import com.ljb.service.MenuService;
+import com.ljb.utils.UID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +25,7 @@ public class MenuController {
 
     @Autowired
     private MenuService menuService;
+
 
     /**
      * 三级权限列表
@@ -62,5 +64,73 @@ public class MenuController {
         return responseResult;
 
     }
+
+    /**
+     * 添加权限
+     * @param menuInfo
+     * @return
+     */
+    @RequestMapping("toaddmenu")
+    public ResponseResult toaddmenu(@RequestBody MenuInfo menuInfo){
+
+        menuInfo.setId(UID.next());
+
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+        try {
+            menuDao.saveAndFlush(menuInfo);
+
+            responseResult.setCode(200);
+        }catch (Exception e){
+            responseResult.setCode(500);
+        }
+
+        return responseResult;
+    }
+
+    /**
+     * 修改菜单权限
+     * @param menuInfo
+     * @return
+     */
+    @RequestMapping("toupdatemenu")
+    public ResponseResult toupdatemenu(@RequestBody MenuInfo menuInfo){
+
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+
+        try{
+
+            menuDao.saveAndFlush(menuInfo);
+            responseResult.setCode(200);
+        }catch (Exception e){
+            responseResult.setCode(500);
+        }
+        return responseResult;
+
+    }
+
+    /**
+     * 删除角色
+     * @param ids
+     * @return
+     */
+    @RequestMapping("todelmenu")
+    public ResponseResult todelmenu(@RequestBody Long ids[]){
+
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+
+
+        try{
+            //批量删除菜单以及与角色之间的中间表信息
+            menuService.delMenuByIds(ids);
+
+            responseResult.setCode(200);
+
+        }catch (Exception e){
+            responseResult.setResult(500);
+        }
+
+        return  responseResult;
+    }
+
 
 }

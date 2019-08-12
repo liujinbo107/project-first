@@ -1,14 +1,19 @@
 package com.ljb.web;
 
 import com.ljb.config.ResponseResult;
+import com.ljb.dao.MenuDao;
 import com.ljb.dao.RoleDao;
 import com.ljb.dao.UserDao;
 import com.ljb.dao.UserMapper;
+import com.ljb.pojo.entity.MenuInfo;
 import com.ljb.pojo.entity.RoleInfo;
 import com.ljb.pojo.entity.UserInfo;
 import com.ljb.utils.MD5;
 import com.ljb.utils.UID;
 import io.lettuce.core.dynamic.annotation.Param;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,10 +24,11 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 
 /**
@@ -42,8 +48,13 @@ public class UserController {
     @Autowired
     private UserDao userDao;
 
+    @Autowired
+    private MenuDao menuDao;
+
     @Autowired(required = false)
     private UserMapper userMapper;
+
+    private List<UserInfo> userList;
 
     /**
      * 获取用户列表
@@ -95,7 +106,7 @@ public class UserController {
         int pageSize = Integer.parseInt(userInfoMap.get("pageSize").toString());
 
         //分页
-        stringBuffer.append(" limit "+(pageNo-1)*pageSize+","+pageSize);
+        stringBuffer.append(" ORDER BY createTime desc limit "+(pageNo-1)*pageSize+","+pageSize);
 
         System.out.println(userInfoMap.toString());
         //清空缓存
@@ -108,6 +119,8 @@ public class UserController {
         Query nativeQuery1 = myEntityManager.createNativeQuery(stringBufferCount.toString());
 
         List<UserInfo> resultList = nativeQuery.getResultList();
+
+        userList = resultList;
 
         //查询用户的角色信息
         resultList.forEach(user->{
@@ -314,6 +327,151 @@ public class UserController {
         return responseResult;
     }
 
+    /**
+     * 批量添加用户
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    @RequestMapping("toaddusers")
+    public ResponseResult toaddusers (@Param("file")MultipartFile file) throws IOException{
 
+        ArrayList<UserInfo> userInfos = new ArrayList<>();
+
+        //打开HSSFWorkbook对象
+
+        XSSFWorkbook workbook = new XSSFWorkbook(file.getInputStream());
+
+        XSSFSheet sheet = workbook.getSheetAt(0);
+
+        int physicalNumberOfRows = sheet.getPhysicalNumberOfRows(); //获取表单所有行
+
+        UID uid = new UID();
+
+        //向数据库导入数据
+        for (int i = 1; i < physicalNumberOfRows; i++){
+
+            XSSFRow row = sheet.getRow(i);
+            UserInfo userInfo = new UserInfo();
+
+            //XSSFCell c0 = row.getCell(0);
+            //long id = new Double(c0.getNumericCellValue()).longValue();
+            userInfo.setId(uid.next());
+
+            XSSFCell c1 = row.getCell(1);
+            userInfo.setUserName(c1.getStringCellValue());
+
+            XSSFCell c2 = row.getCell(2);
+            userInfo.setLoginName(c2.getStringCellValue());
+
+            XSSFCell c3 = row.getCell(3);
+            userInfo.setParentId(new Double(c3.getNumericCellValue()).longValue());
+
+            XSSFCell c4 = row.getCell(4);
+            userInfo.setPassword(c4.getStringCellValue());
+
+            XSSFCell c5 = row.getCell(5);
+            userInfo.setSex((int)c5.getNumericCellValue());
+
+            XSSFCell c6 = row.getCell(6);
+            userInfo.setTel(c6.getStringCellValue());
+
+            XSSFCell c7 = row.getCell(7);
+            userInfo.setTouxiang(c7.getStringCellValue());
+
+            userInfos.add(userInfo);
+
+        }
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+        try{
+            userInfos.forEach(userInfo -> {
+                userDao.saveAndFlush(userInfo);
+            });
+            responseResult.setCode(200);
+        }catch (Exception e){
+            responseResult.setCode(500);
+        }
+
+        return responseResult;
+    }
+
+    /**
+     * 导出数据到Excel文件
+     * @return
+     */
+    @RequestMapping("toexport")
+    public ResponseResult toexport() throws IOException{
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        String fileName = "用户信息表"+simpleDateFormat.format(new Date())+".xlsx";
+        String sheetName = "用户信息表";
+        String[] titile ={"id","用户名","登录名","parentId","性别","电话","头像","创建时间","修改时间"};
+
+        //在文档中添加表单
+        XSSFSheet sheet = workbook.createSheet(sheetName);
+
+        //创建单元格格式，并设置居中
+        XSSFCellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.CENTER);
+
+        //创建第一行用于填充标题
+        XSSFRow titleRow = sheet.createRow(0);
+
+        for (int i=0 ; i<titile.length ; i++) {
+            //创建单元格
+            XSSFCell cell = titleRow.createCell(i);
+            //设置单元格内容
+            cell.setCellValue(titile[i]);
+            //设置单元格样式
+            cell.setCellStyle(style);
+        }
+
+        System.out.println(userList);
+        Row row = null;
+
+
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+        try {
+            for(int i = 0; i < userList.size();i++){
+                //创建list.siza()行数据
+                row = sheet.createRow(i + 1);
+                //把值写进单元格
+                row.createCell(0).setCellValue(userList.get(i).getId());
+                row.createCell(1).setCellValue(userList.get(i).getUserName());
+                row.createCell(2).setCellValue(userList.get(i).getLoginName());
+                row.createCell(3).setCellValue(userList.get(i).getPassword());
+                row.createCell(4).setCellValue(userList.get(i).getSex());
+                row.createCell(5).setCellValue(userList.get(i).getTel());
+                row.createCell(6).setCellValue(userList.get(i).getTouxiang());
+                row.createCell(7).setCellValue(sdf.format(userList.get(i).getCreateTime()));
+                row.createCell(8).setCellValue(sdf.format(userList.get(i).getUpdateTime()));
+
+            }
+
+            //获取配置文件中保存对应excel文件的路径  文件目录
+            File file = new File("E:\\biao");
+            if(!file.exists()){
+                file.mkdirs();
+            }
+
+            String savePath = "E:\\biao\\"+fileName;
+            FileOutputStream fileOut = new FileOutputStream(savePath);
+            workbook.write(fileOut);
+
+            fileOut.close();
+
+            responseResult.setCode(200);
+        }catch (Exception e){
+
+            responseResult.setCode(500);
+        }
+
+        return responseResult;
+    }
 
 }

@@ -75,7 +75,7 @@ public class RoleController {
         int pageSize = Integer.parseInt(roleInfoMap.get("pageSize").toString());
 
         //分页
-        stringBuffer.append(" limit "+(pageNo-1)*pageSize+","+pageSize);
+        stringBuffer.append(" ORDER BY createTime desc  limit "+(pageNo-1)*pageSize+","+pageSize);
 
         System.out.println(roleInfoMap.toString());
 
