@@ -22,8 +22,8 @@ import java.util.ArrayList;
  * @author 刘进波
  * @create 2019-07-20 8:53
  */
-//@Configuration
-//@EnableSwagger2
+@Configuration
+@EnableSwagger2
 public class SwaggerConfig {
 
     @Autowired
@@ -34,8 +34,8 @@ public class SwaggerConfig {
         Docket docket = new Docket(DocumentationType.SWAGGER_2);
 
         //配置接口的过滤start
-        docket.select().apis(RequestHandlerSelectors.basePackage("com.liujinbo.testswaggerdemo01.web"))
-            .paths(PathSelectors.ant("/swagger/**"))
+        docket.select().apis(RequestHandlerSelectors.basePackage("com.sso.web"))
+            .paths(PathSelectors.ant("/**"))
             .build();
         //配置忽略的参数
         //docket.ignoredParameterTypes(String.class);
@@ -46,7 +46,7 @@ public class SwaggerConfig {
         //docket.enable(b);
 
         //配置API的分组  多个分组需要多个Docket实例
-        docket.groupName("ssdsdfsdfsfd");
+        docket.groupName("sso");
 
         //配置全局的参数
         ArrayList<Parameter> parameterList = new ArrayList<>();
@@ -90,7 +90,7 @@ public class SwaggerConfig {
 
         Contact contact = new Contact("刘进波", "http://www.baidu.com", "5555@.qq.com");
         ApiInfo apiInfo = new ApiInfo(
-                "这是文档的标题",
+                "标题",
                 "这是文档的描述信息",
                 "v-1.0",
                 "http://www.jd.com",

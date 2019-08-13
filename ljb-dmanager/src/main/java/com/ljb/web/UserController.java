@@ -217,6 +217,8 @@ public class UserController {
 
             userDao.save(userInfo);
 
+            userMapper.adduserrole(userInfo.getId(),1908131117520000L);
+
             responseResult.setSuccess("添加成功");
 
             responseResult.setCode(200);
@@ -275,14 +277,42 @@ public class UserController {
     }
 
     /**
+     * 解除用户绑定的角色
+     * @param map
+     * @return
+     */
+    @RequestMapping("todelbdrole")
+    public ResponseResult delbdrole(@RequestBody Map<String,String> map){
+
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+        try{
+            //获取用户id
+            long id = Long.parseLong(map.get("id"));
+            //解除用户之前的角色
+            userMapper.deluserrole(id);
+
+            //给用户绑定一个最基本的普通用户
+            userMapper.adduserrole(id,1908131117520000L);
+
+            responseResult.setCode(200);
+        }catch (Exception e){
+            responseResult.setCode(500);
+        }
+
+        return responseResult;
+    }
+
+    /**
      * 角色列表
      * @return
      */
     @RequestMapping("tofindallrole")
-    public ResponseResult findallrole(){
+    public ResponseResult findallrole(@RequestBody Map<String,String> map){
+        //获取操作用户角色的等级
+        Integer leval = Integer.parseInt(map.get("leval"));
 
-        //获取所有角色列表
-        List<RoleInfo> all = roleDao.findAll();
+        //获取该用户角色以下或等于的角色列表
+        List<RoleInfo> all = roleDao.findAllByLevel(leval);
 
         ResponseResult responseResult = ResponseResult.getResponseResult();
 
@@ -380,6 +410,9 @@ public class UserController {
             userInfo.setTouxiang(c7.getStringCellValue());
 
             userInfos.add(userInfo);
+
+            //给每个用户绑定普通用户的角色
+            userMapper.adduserrole(userInfo.getId(),1908131117520000L);
 
         }
         ResponseResult responseResult = ResponseResult.getResponseResult();

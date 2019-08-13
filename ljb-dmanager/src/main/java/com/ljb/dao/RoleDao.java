@@ -4,6 +4,8 @@ import com.ljb.pojo.entity.RoleInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+
 public interface RoleDao extends JpaRepository<RoleInfo,Long> {
 
     /**
@@ -21,5 +23,8 @@ public interface RoleDao extends JpaRepository<RoleInfo,Long> {
      * @return
      */
     public RoleInfo findAllByRoleName(String roleName);
+
+    @Query(value = "select br.* from base_role br where level >= ?1",nativeQuery = true)
+    public List<RoleInfo> findAllByLevel(Integer level);
 
 }

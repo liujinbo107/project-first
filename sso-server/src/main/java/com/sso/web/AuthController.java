@@ -9,6 +9,8 @@ import com.ljb.randm.VerifyCodeUtils;
 import com.ljb.utils.MD5;
 import com.ljb.utils.UID;
 import com.sso.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
@@ -27,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @create 2019-08-05 11:59
  */
 @Controller
+@Api(tags = "这是sso登录的服务接口")
 public class AuthController {
 
     @Autowired
@@ -43,6 +46,7 @@ public class AuthController {
      */
     @RequestMapping("getCode")
     @ResponseBody
+    @ApiOperation("这是获取验证码")
     public ResponseResult getCode(HttpServletRequest request, HttpServletResponse response){
 
         Cookie[] cookies = request.getCookies();

@@ -5,8 +5,10 @@ import com.ljb.dao.MenuDao;
 import com.ljb.dao.RoleDao;
 import com.ljb.dao.UserMapper;
 import com.ljb.pojo.entity.MenuInfo;
+
 import com.ljb.pojo.entity.RoleInfo;
-import com.ljb.pojo.entity.UserInfo;
+
+import com.ljb.service.MenuService;
 import com.ljb.service.RoleService;
 import com.ljb.utils.StringToInteger;
 import com.ljb.utils.UID;
@@ -16,11 +18,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.persistence.CacheRetrieveMode;
+
 import javax.persistence.EntityManager;
 import javax.persistence.FlushModeType;
 import javax.persistence.Query;
-import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -192,12 +194,33 @@ public class RoleController {
     }
 
     /**
+     * 获取用户角色的权限列表
+     * @return
+     */
+    @RequestMapping("tofindallmenuByRoleId")
+    public ResponseResult tofindallmenuByRoleId(@RequestBody Map<String,String> map){
+
+        //获取用户的角色id
+        long id = Long.parseLong(map.get("id"));
+
+        RoleInfo roleInfo = roleDao.findById(id).get();
+
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+
+        List<MenuInfo> menuInfos = roleService.getRoleMenu(roleInfo);
+
+        responseResult.setResult(menuInfos);
+
+        return responseResult;
+    }
+
+    /**
      * 获取所有权限列表
+     * @param
      * @return
      */
     @RequestMapping("tofindallmenu")
     public ResponseResult tofindallmenu(){
-
 
         ResponseResult responseResult = ResponseResult.getResponseResult();
 
