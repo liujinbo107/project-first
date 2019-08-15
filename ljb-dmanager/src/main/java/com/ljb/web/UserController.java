@@ -1,5 +1,8 @@
 package com.ljb.web;
 
+import com.github.tobato.fastdfs.domain.StorePath;
+import com.github.tobato.fastdfs.domain.ThumbImageConfig;
+import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import com.ljb.config.ResponseResult;
 import com.ljb.dao.MenuDao;
 import com.ljb.dao.RoleDao;
@@ -11,11 +14,14 @@ import com.ljb.pojo.entity.UserInfo;
 import com.ljb.utils.MD5;
 import com.ljb.utils.UID;
 import io.lettuce.core.dynamic.annotation.Param;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,6 +42,7 @@ import java.util.*;
  * @create 2019-08-07 8:53
  */
 @RestController
+@Api(tags = "用户管理接口")
 public class UserController {
 
     @Autowired
@@ -56,12 +63,25 @@ public class UserController {
 
     private List<UserInfo> userList;
 
+    private String imgname;
+
+
+    @Autowired
+    private FastFileStorageClient storageClient;
+
+    @Autowired
+    private ThumbImageConfig thumbImageConfig;
+
+    @Autowired
+    private RedisTemplate<String,String> redisTemplate;
+
     /**
      * 获取用户列表
      * @param userInfoMap
      * @return
      */
     @RequestMapping("toUserList")
+    @ApiOperation("获取用户列表")
     public ResponseResult touserlist(@RequestBody Map<String,String> userInfoMap){
 
         StringBuffer stringBuffer = new StringBuffer("select * from base_user where 1 = 1");
@@ -151,6 +171,7 @@ public class UserController {
      * @return
      */
     @RequestMapping("todeluser")
+    @ApiOperation("删除用户")
     public ResponseResult todeluser(@RequestBody Map<String,Object> map){
 
         //获取userid
@@ -181,9 +202,20 @@ public class UserController {
      * @throws IOException
      */
     @RequestMapping("touploaduser")
+    @ApiOperation("上传用户的头像图片")
     public void touploaduser(@Param("file") MultipartFile file) throws IOException {
 
-        file.transferTo(new File("E:\\img\\"+file.getOriginalFilename()));
+        /*file.transferTo(new File("E:\\img\\"+file.getOriginalFilename()));*/
+
+        StorePath storePath = this.storageClient.uploadImageAndCrtThumbImage(
+
+                file.getInputStream(), file.getSize(), "jpg", null);
+
+        String path = thumbImageConfig.getThumbImagePath(storePath.getPath());
+
+        imgname=path.substring(0,path.lastIndexOf("_"));
+
+
     }
 
     /**
@@ -192,6 +224,7 @@ public class UserController {
      * @return
      */
     @RequestMapping("toadduser")
+    @ApiOperation("添加用户")
     public ResponseResult toadduser(@RequestBody UserInfo userInfo){
 
         ResponseResult responseResult = ResponseResult.getResponseResult();
@@ -215,6 +248,8 @@ public class UserController {
             //重新设置密码
             userInfo.setPassword(lcg);
 
+            userInfo.setTouxiang(imgname);
+
             userDao.save(userInfo);
 
             userMapper.adduserrole(userInfo.getId(),1908131117520000L);
@@ -237,6 +272,7 @@ public class UserController {
      * @return
      */
     @RequestMapping("toupdateuser")
+    @ApiOperation("修改用户")
     public ResponseResult toupdateuser(@RequestBody UserInfo userInfo){
 
         ResponseResult responseResult = ResponseResult.getResponseResult();
@@ -262,6 +298,8 @@ public class UserController {
             //重新设置密码
             userInfo.setPassword(lcg);
 
+            userInfo.setTouxiang(imgname);
+
             userDao.saveAndFlush(userInfo);
 
             responseResult.setSuccess("修改成功ss");
@@ -282,6 +320,7 @@ public class UserController {
      * @return
      */
     @RequestMapping("todelbdrole")
+    @ApiOperation("解除用户绑定的角色")
     public ResponseResult delbdrole(@RequestBody Map<String,String> map){
 
         ResponseResult responseResult = ResponseResult.getResponseResult();
@@ -307,6 +346,7 @@ public class UserController {
      * @return
      */
     @RequestMapping("tofindallrole")
+    @ApiOperation("根据等级获取角色列表")
     public ResponseResult findallrole(@RequestBody Map<String,String> map){
         //获取操作用户角色的等级
         Integer leval = Integer.parseInt(map.get("leval"));
@@ -328,6 +368,7 @@ public class UserController {
      * @return
      */
     @RequestMapping("tobdrole")
+    @ApiOperation("用户绑定角色")
     public ResponseResult tobdrole(@RequestBody Map<String,String> map){
 
         //获取用户id
@@ -364,6 +405,7 @@ public class UserController {
      * @throws IOException
      */
     @RequestMapping("toaddusers")
+    @ApiOperation("批量添加用户")
     public ResponseResult toaddusers (@Param("file")MultipartFile file) throws IOException{
 
         ArrayList<UserInfo> userInfos = new ArrayList<>();
@@ -429,10 +471,34 @@ public class UserController {
     }
 
     /**
+     * 获取近7天的用户访问量
+     * @return
+     */
+    @RequestMapping("getUserAccess")
+    @ApiOperation("获取近7天的用户访问量")
+    public ResponseResult getUserAccess(){
+        List<String> list = new ArrayList<>();
+        for (int i = -6;i<=0;i++){
+            Calendar calendar1 = Calendar.getInstance();
+            SimpleDateFormat sdf1 = new SimpleDateFormat("yyyyMMdd");
+            calendar1.add(Calendar.DATE, i);
+            String three_days_ago = sdf1.format(calendar1.getTime());
+            String s = redisTemplate.opsForValue().get(three_days_ago);
+            list.add(s);
+
+        }
+        System.out.println(list);
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+        responseResult.setResult(list);
+        return  responseResult;
+    }
+
+    /**
      * 导出数据到Excel文件
      * @return
      */
     @RequestMapping("toexport")
+    @ApiOperation("批量导出用户数据")
     public ResponseResult toexport() throws IOException{
 
         XSSFWorkbook workbook = new XSSFWorkbook();

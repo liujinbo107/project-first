@@ -1,4 +1,4 @@
-package com.sso.config;
+package com.ljb.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +34,7 @@ public class SwaggerConfig {
         Docket docket = new Docket(DocumentationType.SWAGGER_2);
 
         //配置接口的过滤start
-        docket.select().apis(RequestHandlerSelectors.basePackage("com.sso.web"))
+        docket.select().apis(RequestHandlerSelectors.basePackage("com.ljb.web"))
             .paths(PathSelectors.ant("/**"))
             .build();
         //配置忽略的参数
@@ -90,8 +90,8 @@ public class SwaggerConfig {
 
         Contact contact = new Contact("刘进波", "http://www.baidu.com", "5555@.qq.com");
         ApiInfo apiInfo = new ApiInfo(
-                "SSO单点登录",
-                "APP用户登录的API接口文档",
+                "用户的管理服务",
+                "APP用户管理的API接口文档",
                 "v-1.0",
                 "http://www.jd.com",
                 contact,"监听信息",

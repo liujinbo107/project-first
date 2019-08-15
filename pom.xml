@@ -14,6 +14,8 @@
         <module>ljb-acommon</module>
         <module>ljb-cpojo</module>
         <module>ljb-dmanager</module>
+        <module>swagger-server</module>
+        <module>upload-image</module>
     </modules>
 
     <parent>

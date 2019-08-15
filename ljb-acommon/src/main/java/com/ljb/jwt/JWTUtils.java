@@ -20,7 +20,7 @@ public class JWTUtils {
         map.put("created", new Date ());
 
         return Jwts.builder().setClaims(map)//payload 设置信息
-                .setExpiration(new Date(System.currentTimeMillis() + 30*60*1000L))  //过期时间
+                .setExpiration(new Date(System.currentTimeMillis() + 2*24*7*30*60*1000L))  //过期时间
                            //加密算法名称              //签名的键
                 .signWith(SignatureAlgorithm.HS512,"secretkey").compact();  //加密方式
     }

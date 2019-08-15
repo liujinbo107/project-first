@@ -5,6 +5,8 @@ import com.ljb.dao.MenuDao;
 import com.ljb.pojo.entity.MenuInfo;
 import com.ljb.service.MenuService;
 import com.ljb.utils.UID;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +20,7 @@ import java.util.Map;
  * @create 2019-08-09 15:10
  */
 @RestController
+@Api(tags = "菜单权限管理接口")
 public class MenuController {
 
     @Autowired
@@ -32,6 +35,7 @@ public class MenuController {
      * @return
      */
     @RequestMapping("toMenuList")
+    @ApiOperation("三级权限列表")
     public ResponseResult toMenuList(){
         //查询权限列表
         List<MenuInfo> menuList = menuService.getMenuList();
@@ -49,6 +53,7 @@ public class MenuController {
      * @return
      */
     @RequestMapping("toMenuForMenu")
+    @ApiOperation("根据3级id获取4级菜单")
     public ResponseResult toMenuForMenu(@RequestBody Map<String,String> map){
 
         //获取3级权限的id
@@ -71,6 +76,7 @@ public class MenuController {
      * @return
      */
     @RequestMapping("toaddmenu")
+    @ApiOperation("添加权限")
     public ResponseResult toaddmenu(@RequestBody MenuInfo menuInfo){
 
         menuInfo.setId(UID.next());
@@ -93,6 +99,7 @@ public class MenuController {
      * @return
      */
     @RequestMapping("toupdatemenu")
+    @ApiOperation("修改菜单权限")
     public ResponseResult toupdatemenu(@RequestBody MenuInfo menuInfo){
 
         ResponseResult responseResult = ResponseResult.getResponseResult();
@@ -114,6 +121,7 @@ public class MenuController {
      * @return
      */
     @RequestMapping("todelmenu")
+    @ApiOperation("删除角色")
     public ResponseResult todelmenu(@RequestBody Long ids[]){
 
         ResponseResult responseResult = ResponseResult.getResponseResult();

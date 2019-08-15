@@ -1,13 +1,19 @@
 package com.ljb;
 
+import com.github.tobato.fastdfs.domain.StorePath;
+import com.github.tobato.fastdfs.domain.ThumbImageConfig;
+import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import com.ljb.dao.RoleDao;
 import com.ljb.dao.UserDao;
 import com.ljb.dao.UserMapper;
 import com.ljb.pojo.entity.RoleInfo;
 import com.ljb.pojo.entity.UserInfo;
+import com.ljb.randm.VerifyCodeUtils;
+import com.ljb.utils.HttpUtils;
 import com.ljb.utils.UID;
 import net.coobird.thumbnailator.Thumbnails;
 
+import org.apache.http.HttpResponse;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.*;
@@ -15,14 +21,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author 刘进波
@@ -39,6 +45,15 @@ public class TestDemo1 {
     private RoleDao roleDao;
 
     private HttpServletResponse response;
+
+    @Autowired
+    private FastFileStorageClient storageClient;
+
+    @Autowired
+    private ThumbImageConfig thumbImageConfig;
+
+    @Autowired
+    private RedisTemplate<String,String> redisTemplate;
 
     /**
      * 这是缩略图
@@ -169,6 +184,83 @@ public class TestDemo1 {
         fileOut.close();
     }
 
+    @Test
+    public void test04() throws FileNotFoundException {
+        File file = new File("E:\\img\\(22).jpg");
 
+        StorePath storePath = this.storageClient.uploadImageAndCrtThumbImage(
+
+                new FileInputStream(file), file.length(), "jpg", null);
+
+        System.out.println(storePath.getFullPath());
+
+        String path = thumbImageConfig.getThumbImagePath(storePath.getPath());
+
+        System.out.println(path.substring(0,path.lastIndexOf("_")));
+
+    }
+
+    @Test
+    public void test05(){
+
+        String host = "http://dingxin.market.alicloudapi.com";
+        String path = "/dx/sendSms";
+        String method = "POST";
+        String appcode = "59f2cc29ccd9454a87bf327bc1438a37";
+        Map<String, String> headers = new HashMap<String, String>();
+        //最后在header中的格式(中间是英文空格)为Authorization:APPCODE 83359fd73fe94948385f570e3c139105
+        headers.put("Authorization", "APPCODE " + appcode);
+        Map<String, String> querys = new HashMap<String, String>();
+        querys.put("mobile", "18334657453");
+        querys.put("param", "code:55634");
+        querys.put("tpl_id", "TP1711063");
+        Map<String, String> bodys = new HashMap<String, String>();
+        try {
+            /**
+             * 重要提示如下:
+             * HttpUtils请从
+             * https://github.com/aliyun/api-gateway-demo-sign-java/blob/master/src/main/java/com/aliyun/api/gateway/demo/util/HttpUtils.java
+             * 下载
+             *
+             * 相应的依赖请参照
+             * https://github.com/aliyun/api-gateway-demo-sign-java/blob/master/pom.xml
+             */
+            HttpResponse response = HttpUtils.doPost(host, path, method, headers, querys, bodys);
+            System.out.println(response.toString());
+            //获取response的body
+            //System.out.println(EntityUtils.toString(response.getEntity()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 生成验证码
+     */
+    @Test
+    public void test06(){
+
+//        Date date = new Date();
+//        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+//        String format = sdf.format(date);
+//        System.out.println(format);
+
+        List<String> list = new ArrayList<>();
+        for (int i = -6;i<=0;i++){
+            Calendar calendar1 = Calendar.getInstance();
+            SimpleDateFormat sdf1 = new SimpleDateFormat("yyyyMMdd");
+            calendar1.add(Calendar.DATE, i);
+            String three_days_ago = sdf1.format(calendar1.getTime());
+            //System.out.println(three_days_ago);
+            //redisTemplate.opsForValue().set(three_days_ago,"5",7, TimeUnit.DAYS);
+            String s = redisTemplate.opsForValue().get(three_days_ago);
+            list.add(s);
+
+        }
+        System.out.println(list);
+        //redisTemplate.opsForValue().increment("20190811",1);
+
+
+    }
 
 }
