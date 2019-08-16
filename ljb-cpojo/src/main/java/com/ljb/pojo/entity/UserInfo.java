@@ -40,6 +40,9 @@ public class UserInfo extends BaseAuditable {
     @Column(name = "touxiang")
     private String touxiang;
 
+    @Column(name = "email")
+    private String email;
+
     @Transient
     private List<MenuInfo> listMenuInfo;
 

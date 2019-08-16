@@ -8,16 +8,21 @@ import com.ljb.pojo.entity.UserInfo;
 import com.ljb.randm.VerifyCodeUtils;
 import com.ljb.utils.MD5;
 import com.ljb.utils.UID;
+import com.sso.dao.UserDao;
 import com.sso.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.mail.internet.MimeMessage;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,6 +44,15 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserDao userDao;
+
+    @Value("${spring.mail.username}")
+    private String from;
+
+    @Autowired
+    private JavaMailSender mailSender;
 
     /**
      * 获取滑动验证的验证码
@@ -149,11 +163,17 @@ public class AuthController {
                     Date date = new Date();
                     SimpleDateFormat sdf1 = new SimpleDateFormat("yyyyMMdd");
                     String fmt = sdf1.format(date);
-                    if(redisTemplate.hasKey(fmt)){
+                    if(redisTemplate.hasKey(fmt)&&!redisTemplate.hasKey(fmt+user.getId())){
                         redisTemplate.opsForValue().increment(fmt,1);
-                    }else{
+                    }
+                    if(!redisTemplate.hasKey(fmt)) {
                         redisTemplate.opsForValue().set(fmt,"1",7,TimeUnit.DAYS);
                     }
+                    //标识用户
+                    if(!redisTemplate.hasKey(fmt+user.getId())){
+                        redisTemplate.opsForValue().set(fmt+user.getId(),"1",1,TimeUnit.DAYS);
+                    }
+
 
                     //设置返回值
                     responseResult.setResult(user);
@@ -227,11 +247,18 @@ public class AuthController {
                     Date date = new Date();
                     SimpleDateFormat sdf1 = new SimpleDateFormat("yyyyMMdd");
                     String fmt = sdf1.format(date);
-                    if(redisTemplate.hasKey(fmt)){
+                    //标识用户
+                    if(redisTemplate.hasKey(fmt)&&!redisTemplate.hasKey(fmt+user.getId())){
                         redisTemplate.opsForValue().increment(fmt,1);
-                    }else{
+                    }
+                    if(!redisTemplate.hasKey(fmt)) {
                         redisTemplate.opsForValue().set(fmt,"1",7,TimeUnit.DAYS);
                     }
+                    //标识用户
+                    if(!redisTemplate.hasKey(fmt+user.getId())){
+                        redisTemplate.opsForValue().set(fmt+user.getId(),"1",1,TimeUnit.DAYS);
+                    }
+
                     //设置返回值
                     responseResult.setResult(user);
 
@@ -273,6 +300,48 @@ public class AuthController {
             responseResult.setCode(500);
         }
         return responseResult;
+    }
+
+    @RequestMapping("tosendEmail")
+    @ResponseBody
+    @ApiOperation("发送邮箱验证")
+    public ResponseResult sendEmail(@RequestBody Map<String,String> map){
+
+        //获取登陆名
+        String loginName = map.get("loginName");
+        //查询该用户是否已注册
+        UserInfo userInfo = userDao.findByLoginName(loginName);
+
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+        if(userInfo!=null){
+            if(userInfo.getEmail()!=null&&userInfo.getEmail()!=""){
+                MimeMessage message=mailSender.createMimeMessage();
+                try {
+                    //true表示需要创建一个multipart message
+                    MimeMessageHelper helper=new MimeMessageHelper(message,true);
+                    helper.setFrom(from);
+                    helper.setTo(userInfo.getEmail());
+                    helper.setSubject("修改密码验证");
+                    helper.setText("请勿回复本邮件.点击下面的链接,重设密码,本邮件超过30分钟,链接将会失效，需要重新申请找回密码.<html><head></head><body><a href='http://127.0.0.1:8080?id='/>http://127.0.0.1:8080</body></html>",true);
+                    mailSender.send(message);
+                    responseResult.setCode(200);
+                    responseResult.setSuccess("邮件发送成功");
+                    System.out.println("html格式邮件发送成功");
+                }catch (Exception e){
+                    responseResult.setCode(506);
+                    responseResult.setError("邮件发送失败");
+                    System.out.println("html格式邮件发送失败");
+                }
+            }else{
+                responseResult.setCode(505);
+                responseResult.setError("该用户还未绑定邮箱");
+            }
+        }else{
+            responseResult.setCode(500);
+            responseResult.setError("该用户不存在");
+        }
+        return responseResult;
+
     }
 
 }

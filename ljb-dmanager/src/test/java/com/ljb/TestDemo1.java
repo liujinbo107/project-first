@@ -20,10 +20,14 @@ import org.apache.poi.xssf.usermodel.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -260,6 +264,30 @@ public class TestDemo1 {
         System.out.println(list);
         //redisTemplate.opsForValue().increment("20190811",1);
 
+    }
+
+    @Value("${spring.mail.username}")
+    private String from;
+
+    @Autowired
+    private JavaMailSender mailSender;
+
+    @Test
+    public void zhaomi(){
+
+        MimeMessage message=mailSender.createMimeMessage();
+        try {
+            //true表示需要创建一个multipart message
+            MimeMessageHelper helper=new MimeMessageHelper(message,true);
+            helper.setFrom(from);
+            helper.setTo("1072435568@qq.com");
+            helper.setSubject("密码重置");
+            helper.setText("<html><head></head><body><a href='http://127.0.0.1:8080'/>http://127.0.0.1:8080</body></html>",true);
+            mailSender.send(message);
+            System.out.println("html格式邮件发送成功");
+        }catch (Exception e){
+            System.out.println("html格式邮件发送失败");
+        }
 
     }
 
