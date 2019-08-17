@@ -86,7 +86,11 @@ public class AuthController {
         return responseResult;
     }
 
-
+    /**
+     *发送手机验证码
+     * @param map
+     * @return
+     */
     @RequestMapping("getPhoneCode")
     @ResponseBody
     @ApiOperation("手机获取验证码")
@@ -115,6 +119,11 @@ public class AuthController {
         return responseResult;
     }
 
+    /**
+     * 使用手机登陆
+     * @param map
+     * @return
+     */
     @RequestMapping("phoneLogin")
     @ResponseBody
     @ApiOperation("手机登陆")
@@ -199,7 +208,12 @@ public class AuthController {
 
     }
 
-
+    /**
+     * 用户密码登陆
+     * @param map
+     * @return
+     * @throws LoginException
+     */
     @ResponseBody
     @RequestMapping("login")
     @ApiOperation("用户登录")
@@ -281,6 +295,11 @@ public class AuthController {
 
     }
 
+    /**
+     * 用户退出
+     * @param map
+     * @return
+     */
     @ResponseBody
     @RequestMapping("loginout")
     @ApiOperation("用户退出")
@@ -302,6 +321,11 @@ public class AuthController {
         return responseResult;
     }
 
+    /**
+     * 发送邮箱验证
+     * @param map
+     * @return
+     */
     @RequestMapping("tosendEmail")
     @ResponseBody
     @ApiOperation("发送邮箱验证")
@@ -322,7 +346,9 @@ public class AuthController {
                     helper.setFrom(from);
                     helper.setTo(userInfo.getEmail());
                     helper.setSubject("修改密码验证");
-                    helper.setText("请勿回复本邮件.点击下面的链接,重设密码,本邮件超过30分钟,链接将会失效，需要重新申请找回密码.<html><head></head><body><a href='http://127.0.0.1:8080?id='/>http://127.0.0.1:8080</body></html>",true);
+                    String flag = userInfo.getId()+"flag";
+                    helper.setText("请勿回复本邮件.点击下面的链接,重设密码,本邮件超过30分钟,链接将会失效，需要重新申请找回密码.<html><head></head><body><a href='http://localhost:8080/repass?id="+userInfo.getId()+"&flag="+flag+"'>点击修改密码</a></body></html>",true);
+                    redisTemplate.opsForValue().set(flag,flag,30,TimeUnit.MINUTES);
                     mailSender.send(message);
                     responseResult.setCode(200);
                     responseResult.setSuccess("邮件发送成功");
@@ -342,6 +368,66 @@ public class AuthController {
         }
         return responseResult;
 
+    }
+
+    /**
+     * 邮箱找回密码
+     * @param map
+     * @return
+     */
+    @RequestMapping("torepassword")
+    @ResponseBody
+    @ApiOperation("邮箱找回密码")
+    public ResponseResult torepassword(@RequestBody Map<String,String> map){
+
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+
+        try {
+            //获取密码
+            String password = map.get("password");
+
+            //加密
+            String pass = MD5.encryptPassword(password.toString(),"lcg");
+
+            //获取用户id
+            long id = Long.parseLong(map.get("id").toString());
+
+            //根据id用户
+            UserInfo userInfo = userDao.findById(id).get();
+            //设置密码
+            userInfo.setPassword(pass);
+
+            userDao.saveAndFlush(userInfo);
+
+            responseResult.setCode(200);
+
+        }catch (Exception e){
+
+            responseResult.setCode(500);
+        }
+
+        return  responseResult;
+
+    }
+
+    /**
+     * 判断邮箱发送的链接是否超时
+     * @param flag
+     * @return
+     */
+    @RequestMapping("toexpire")
+    @ResponseBody
+    @ApiOperation("验证修改密码的链接是否超时")
+    public ResponseResult toexpire(String flag){
+
+        ResponseResult responseResult = ResponseResult.getResponseResult();
+        //判断是否超时
+        if(redisTemplate.hasKey(flag)){
+            responseResult.setCode(200);
+        }else{
+            responseResult.setCode(500);
+        }
+        return responseResult;
     }
 
 }
